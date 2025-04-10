@@ -1,0 +1,17 @@
+[project]
+name = "receipt-scanner"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "easyocr>=1.7.2",
+    "fastapi>=0.115.12",
+    "logfire>=3.12.0",
+    "opencv-python>=4.11.0.86",
+    "pydantic>=2.11.3",
+    "pydantic-ai>=0.0.55",
+    "sqlalchemy>=2.0.40",
+    "uvicorn>=0.34.0",
+]
