@@ -12,6 +12,7 @@ dependencies = [
     "opencv-python>=4.11.0.86",
     "pydantic>=2.11.3",
     "pydantic-ai>=0.0.55",
+    "python-multipart>=0.0.20",
     "sqlalchemy>=2.0.40",
     "uvicorn>=0.34.0",
 ]
