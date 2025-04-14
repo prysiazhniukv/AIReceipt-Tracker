@@ -1,5 +1,4 @@
 from pydantic_ai import Agent
-from receipt_scanner.eyes.main import result
 from receipt_scanner.models import Receipt
 
 agent = Agent(
@@ -20,10 +19,10 @@ Return a valid JSON that matches this structure:
     - price: total price of that product
 
 Do not hallucinate. If something is missing, skip it.
-"""
+""",
 )
-receipt_text = "\n".join(result)
 
 
-response = agent.run_sync(receipt_text)
-print(response.data)
+def receipt_agent(receipt_text: str):
+    response = agent.run_sync(receipt_text)
+    return response.data
