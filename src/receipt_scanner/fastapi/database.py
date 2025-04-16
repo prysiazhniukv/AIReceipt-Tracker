@@ -1,14 +1,12 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from typing import AsyncGenerator
 
 SQLITE_DATABASE_URL = "sqlite+aiosqlite:///./note.db"
 
 async_engine = create_async_engine(SQLITE_DATABASE_URL, echo=True)
 
 AsyncSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
     bind=async_engine,
     class_=AsyncSession,
     expire_on_commit=False,
@@ -17,5 +15,6 @@ AsyncSessionLocal = sessionmaker(
 Base = declarative_base()
 
 
-def get_async_session() -> AsyncSession:
-    return AsyncSessionLocal()
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session

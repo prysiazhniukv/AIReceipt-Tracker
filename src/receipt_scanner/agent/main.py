@@ -1,5 +1,8 @@
 from pydantic_ai import Agent
 from receipt_scanner.models import Receipt
+from dotenv import load_dotenv
+
+load_dotenv
 
 agent = Agent(
     model="openai:gpt-4o",
@@ -23,6 +26,6 @@ Do not hallucinate. If something is missing, skip it.
 )
 
 
-def receipt_agent(receipt_text: str):
-    response = agent.run_sync(receipt_text)
+async def receipt_agent(receipt_text: str):
+    response = await agent.run(receipt_text)
     return response.data

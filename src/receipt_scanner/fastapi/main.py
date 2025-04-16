@@ -4,11 +4,10 @@ from sqlalchemy.future import select
 import os
 from uuid import uuid4
 import aiofiles
-from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from receipt_scanner.fastapi.database import get_async_session, async_engine
-from receipt_scanner.fastapi.models import Receipt, Base
+from receipt_scanner.fastapi.models import Receipt, ReceiptItem, Base
 from receipt_scanner.fastapi.eyes import receipt_to_text
 from receipt_scanner.agent.main import receipt_agent
 
@@ -25,14 +24,9 @@ UPLOAD_DIR = "uploaded_images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with get_async_session() as session:
-        yield session
-
-
 @app.post("/send_receipt")
 async def send_receipt(
-    file: UploadFile = File(...), db: AsyncSession = Depends(get_db)
+    file: UploadFile = File(...), db: AsyncSession = Depends(get_async_session)
 ):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided.")
@@ -58,13 +52,48 @@ async def send_receipt(
 
 
 @app.get("/get_cost/")
-async def get_cost(receipt_id: int, db: AsyncSession = Depends(get_db)):
+async def get_cost(receipt_id: int, db: AsyncSession = Depends(get_async_session)):
     result = await db.execute(select(Receipt).where(Receipt.id == receipt_id))
     receipt = result.scalars().first()
     if not receipt:
         return {"error": f"Receipt with ID {receipt_id} not found"}
 
-    receipt_text_unedited = receipt_to_text(receipt.photo_url)
-    lines = [text for _, text, _ in receipt_text_unedited]
-    receipt_text = "\n".join(lines)
-    final_result = receipt_agent(receipt_text)
+    receipt_text = "\n".join(receipt_to_text(receipt.photo_url))
+    final_result = await receipt_agent(receipt_text)
+
+    receipt.store_name = final_result.storeName
+    receipt.total_price = final_result.total
+
+    for product in final_result.products:
+        item = ReceiptItem(
+            receipt_id=receipt.id,
+            name=product.name,
+            quantity=product.quantity.value,
+            unit_price=product.price / product.quantity.value
+            if product.quantity.value > 0
+            else 0,
+        )
+        db.add(item)
+
+    await db.commit()
+    await db.refresh(receipt)
+
+    result = await db.execute(
+        select(ReceiptItem).where(ReceiptItem.receipt_id == receipt.id)
+    )
+    items = result.scalars().all()
+
+    return {
+        "id": receipt.id,
+        "store_name": receipt.store_name,
+        "total_price": receipt.total_price,
+        "items": [
+            {
+                "name": item.name,
+                "quantity": item.quantity,
+                "unit_price": item.unit_price,
+            }
+            for item in items
+        ],
+        "photo_url": receipt.photo_url,
+    }
