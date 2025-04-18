@@ -3,6 +3,7 @@ from sqlalchemy import String, DateTime, func, ForeignKey, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import datetime
 from typing import List
+from user import User
 
 class ReceiptItem(Base):
     __tablename__ = "receipt_items"
@@ -10,8 +11,7 @@ class ReceiptItem(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     receipt_id: Mapped[int] = mapped_column(ForeignKey("receipts.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String)
-    quantity: Mapped[int]
-    unit_price: Mapped[float] = mapped_column(Numeric)
+    price: Mapped[float] = mapped_column(Numeric)
 
 
 
@@ -29,6 +29,9 @@ class Receipt(Base):
         cascade="all, delete-orphan"
     )
     total_price: Mapped[float] = mapped_column(Numeric, nullable=True)
+
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    owner: Mapped["User"] = relationship("User", back_populates="receipts")
 
 
 

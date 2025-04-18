@@ -16,9 +16,6 @@ Return a valid JSON that matches this structure:
 - total: total amount paid
 - products: a list of products with:
     - name: product name
-    - quantity:
-        - value: amount (can be weight in grams or number of items)
-        - unit: one of "g", "ml", or "pcs"
     - price: total price of that product
 
 Do not hallucinate. If something is missing, skip it.

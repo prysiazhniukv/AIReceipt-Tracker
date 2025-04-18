@@ -9,6 +9,7 @@ wheels/
 images/
 note.db
 uploaded_images/
+.python-version
 
 # Virtual environments
 .venv

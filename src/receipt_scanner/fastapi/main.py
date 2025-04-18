@@ -10,6 +10,7 @@ from receipt_scanner.fastapi.database import get_async_session, async_engine
 from receipt_scanner.fastapi.models import Receipt, ReceiptItem, Base
 from receipt_scanner.fastapi.eyes import receipt_to_text
 from receipt_scanner.agent.main import receipt_agent
+from .routers import stats
 
 
 @asynccontextmanager
@@ -22,6 +23,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 UPLOAD_DIR = "uploaded_images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+app.include_router(stats.router)
 
 
 @app.post("/send_receipt")
@@ -68,10 +71,7 @@ async def get_cost(receipt_id: int, db: AsyncSession = Depends(get_async_session
         item = ReceiptItem(
             receipt_id=receipt.id,
             name=product.name,
-            quantity=product.quantity.value,
-            unit_price=product.price / product.quantity.value
-            if product.quantity.value > 0
-            else 0,
+            price=product.price
         )
         db.add(item)
 
@@ -90,8 +90,7 @@ async def get_cost(receipt_id: int, db: AsyncSession = Depends(get_async_session
         "items": [
             {
                 "name": item.name,
-                "quantity": item.quantity,
-                "unit_price": item.unit_price,
+                "price": item.price
             }
             for item in items
         ],
